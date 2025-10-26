@@ -1,5 +1,8 @@
+// Fix: Import React to resolve the 'React' namespace for React.FC.
+import React from 'react';
 
 export enum Page {
+  Showcase = 'Showcase',
   Apps = 'Apps',
   Videos = 'Videos',
   Learn = 'Learn',
@@ -39,6 +42,14 @@ export interface WebInfo {
   uri: string;
   description?: string;
 }
+
+export interface ShowcaseItem {
+  category: 'Project' | 'Data Insight' | 'Innovation';
+  title: string;
+  description: string;
+  icon: React.FC<{className?: string}>;
+}
+
 
 export type ContentItem = AppInfo | VideoInfo | CourseInfo | WebInfo;
 

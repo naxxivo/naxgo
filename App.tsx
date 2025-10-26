@@ -7,11 +7,12 @@ import CourseCard from './components/CourseCard';
 import WebCard from './components/WebCard';
 import Loader from './components/Loader';
 import SourceLink from './components/SourceLink';
+import Showcase from './components/Showcase';
 import { Page, ContentItem, Source, WebInfo } from './types';
 import { searchContent } from './services/geminiService';
 
 const App: React.FC = () => {
-  const [activePage, setActivePage] = useState<Page>(Page.Apps);
+  const [activePage, setActivePage] = useState<Page>(Page.Showcase);
   const [searchResults, setSearchResults] = useState<ContentItem[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(false);
@@ -48,12 +49,18 @@ const App: React.FC = () => {
   }, [theme]);
 
   const handleSearch = async (query: string) => {
+    // If on showcase page, switch to a default search page like Apps
+    if (activePage === Page.Showcase) {
+        setActivePage(Page.Apps);
+    }
     setIsLoading(true);
     setError(null);
     setSummary(null);
     setCurrentQuery(query);
     try {
-      const { results, sources, summary } = await searchContent(query, activePage);
+      // Use the active page, or default to Apps if coming from Showcase
+      const pageToSearch = activePage === Page.Showcase ? Page.Apps : activePage;
+      const { results, sources, summary } = await searchContent(query, pageToSearch);
       setSearchResults(results);
       setSources(sources);
       setSummary(summary);
@@ -67,8 +74,14 @@ const App: React.FC = () => {
   };
   
   useEffect(() => {
-    if (currentQuery) {
+    if (currentQuery && activePage !== Page.Showcase) {
       handleSearch(currentQuery);
+    } else if (activePage !== Page.Showcase) {
+      setSearchResults([]);
+      setSources([]);
+      setSummary(null);
+      setError(null);
+      setCurrentQuery('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activePage]);
@@ -103,6 +116,9 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (activePage === Page.Showcase) {
+      return <Showcase />;
+    }
     if (isLoading) {
       return <Loader />;
     }
@@ -112,8 +128,8 @@ const App: React.FC = () => {
     if (searchResults.length === 0 && !summary) {
       return (
         <div className="text-center text-gray-500 dark:text-gray-400 py-20">
-          <h2 className="text-2xl font-semibold">Welcome to Naxxivo X Google</h2>
-          <p className="mt-2">Search for apps, videos, courses, or on the web to get started.</p>
+          <h2 className="text-2xl font-semibold">Search for {activePage}</h2>
+          <p className="mt-2">Use the search bar above to find content.</p>
         </div>
       );
     }
@@ -143,10 +159,11 @@ const App: React.FC = () => {
       />
       <main className="container mx-auto p-4 sm:p-6 lg:p-8">
         {renderContent()}
-        {activePage !== Page.Web && <SourceLink sources={sources} />}
+        {activePage !== Page.Web && activePage !== Page.Showcase && <SourceLink sources={sources} />}
       </main>
-      <footer className="text-center p-4 text-xs text-gray-400 dark:text-gray-500 border-t border-gray-200 dark:border-gray-700 mt-8">
-        <p>&copy; {new Date().getFullYear()} Naxxivo. All rights reserved. Content provided by Gemini.</p>
+      <footer className="text-center p-6 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-8">
+        <p className="font-semibold">Google x Naxxivo</p>
+        <p className="text-xs mt-1">&copy; {new Date().getFullYear()} All rights reserved. Content discovery powered by Google Gemini.</p>
       </footer>
     </div>
   );
