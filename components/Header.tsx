@@ -1,6 +1,6 @@
 
-import React, { useState } from 'react';
-import { Page } from '../types';
+import React, { useState, useEffect, useRef } from 'react';
+import { Page, User } from '../types';
 
 interface HeaderProps {
   activePage: Page;
@@ -9,6 +9,8 @@ interface HeaderProps {
   isLoading: boolean;
   theme: 'light' | 'dark';
   toggleTheme: () => void;
+  currentUser: User | null;
+  logout: () => void;
 }
 
 const GoogleIcon = () => (
@@ -21,8 +23,10 @@ const GoogleIcon = () => (
 );
 
 
-const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, onSearch, isLoading, theme, toggleTheme }) => {
+const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, onSearch, isLoading, theme, toggleTheme, currentUser, logout }) => {
   const [query, setQuery] = useState('');
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +35,27 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, onSearch, is
     }
   };
 
-  const navPages = Object.values(Page).filter(page => page !== Page.Showcase);
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    if (window.confirm('Are you sure you want to log out?')) {
+      setIsMenuOpen(false);
+      logout();
+      setActivePage(Page.Showcase);
+    }
+  }
+
+  const navPages = Object.values(Page).filter(p => ![Page.Showcase, Page.Login, Page.Register, Page.Profile].includes(p));
+
+  const mainPages = [Page.Showcase, Page.Apps, Page.Videos, Page.Learn, Page.Web];
 
   return (
     <header className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-md sticky top-0 z-50 shadow-sm">
@@ -45,7 +69,7 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, onSearch, is
 
           <div className="hidden md:block">
             <div className="flex items-baseline space-x-4">
-              {Object.values(Page).map((page) => (
+              {mainPages.map((page) => (
                 <button
                   key={page}
                   onClick={() => setActivePage(page)}
@@ -81,27 +105,57 @@ const Header: React.FC<HeaderProps> = ({ activePage, setActivePage, onSearch, is
                     </div>
                 </form>
              </div>
-             <button
+             <div className="ml-4 flex items-center">
+              <button
                 onClick={toggleTheme}
-                className="ml-4 p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-blue-500"
+                className="p-2 rounded-full text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-blue-500"
                 aria-label="Toggle dark mode"
               >
                 {theme === 'light' ? (
-                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                 ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                   </svg>
                 )}
               </button>
+
+              {currentUser ? (
+                <div className="relative ml-3" ref={menuRef}>
+                  <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="flex items-center justify-center w-9 h-9 bg-blue-500 text-white rounded-full font-bold text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white dark:focus:ring-offset-gray-900 focus:ring-blue-500">
+                    {currentUser.username.charAt(0).toUpperCase()}
+                  </button>
+                  {isMenuOpen && (
+                    <div className="origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 focus:outline-none">
+                      <div className="px-4 py-2 text-sm text-gray-700 dark:text-gray-200 border-b dark:border-gray-600">
+                        <p className="font-semibold truncate">{currentUser.username}</p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{currentUser.email}</p>
+                      </div>
+                      <a href="#" onClick={(e) => { e.preventDefault(); setActivePage(Page.Profile); setIsMenuOpen(false); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Profile</a>
+                      <a href="#" onClick={(e) => { e.preventDefault(); handleLogout(); }} className="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700">Logout</a>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="hidden sm:flex items-center ml-4 space-x-2">
+                   <button onClick={() => setActivePage(Page.Login)} className="px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full">
+                     Login
+                   </button>
+                   <button onClick={() => setActivePage(Page.Register)} className="px-4 py-2 text-sm font-medium text-white bg-blue-500 hover:bg-blue-600 rounded-full">
+                     Sign Up
+                   </button>
+                </div>
+              )}
+
+            </div>
           </div>
         </div>
       </div>
       <div className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
         <div className="flex justify-around p-2">
-            {Object.values(Page).map((page) => (
+            {mainPages.map((page) => (
               <button
                 key={page}
                 onClick={() => setActivePage(page)}

@@ -7,6 +7,19 @@ export enum Page {
   Videos = 'Videos',
   Learn = 'Learn',
   Web = 'Web',
+  Login = 'Login',
+  Register = 'Register',
+  Profile = 'Profile',
+}
+
+export interface User {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  bio: string;
+  description: string;
+  profilePictureUrl: string;
 }
 
 export interface AppInfo {

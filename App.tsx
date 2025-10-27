@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import Header from './components/Header';
 import AppCard from './components/AppCard';
 import VideoCard from './components/VideoCard';
@@ -8,10 +8,14 @@ import WebCard from './components/WebCard';
 import Loader from './components/Loader';
 import SourceLink from './components/SourceLink';
 import Showcase from './components/Showcase';
+import LoginPage from './components/auth/LoginPage';
+import RegisterPage from './components/auth/RegisterPage';
+import ProfilePage from './components/auth/ProfilePage';
+import { AuthProvider, AuthContext } from './contexts/AuthContext';
 import { Page, ContentItem, Source, WebInfo } from './types';
 import { searchContent } from './services/geminiService';
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [activePage, setActivePage] = useState<Page>(Page.Showcase);
   const [searchResults, setSearchResults] = useState<ContentItem[]>([]);
   const [sources, setSources] = useState<Source[]>([]);
@@ -29,6 +33,10 @@ const App: React.FC = () => {
     }
     return 'light';
   });
+
+  const auth = useContext(AuthContext);
+  if (!auth) throw new Error("AuthContext not found");
+  const { currentUser, logout } = auth;
 
   const toggleTheme = () => {
     setTheme(prevTheme => (prevTheme === 'light' ? 'dark' : 'light'));
@@ -49,17 +57,14 @@ const App: React.FC = () => {
   }, [theme]);
 
   const handleSearch = async (query: string) => {
-    // If on showcase page, switch to a default search page like Apps
-    if (activePage === Page.Showcase) {
-        setActivePage(Page.Apps);
-    }
+    const pageToSearch = activePage === Page.Showcase ? Page.Apps : activePage;
+    setActivePage(pageToSearch);
+    
     setIsLoading(true);
     setError(null);
     setSummary(null);
     setCurrentQuery(query);
     try {
-      // Use the active page, or default to Apps if coming from Showcase
-      const pageToSearch = activePage === Page.Showcase ? Page.Apps : activePage;
       const { results, sources, summary } = await searchContent(query, pageToSearch);
       setSearchResults(results);
       setSources(sources);
@@ -73,10 +78,12 @@ const App: React.FC = () => {
     }
   };
   
+  const isAuthPage = (page: Page) => [Page.Login, Page.Register, Page.Profile].includes(page);
+
   useEffect(() => {
-    if (currentQuery && activePage !== Page.Showcase) {
+    if (currentQuery && !isAuthPage(activePage) && activePage !== Page.Showcase) {
       handleSearch(currentQuery);
-    } else if (activePage !== Page.Showcase) {
+    } else if (!isAuthPage(activePage) && activePage !== Page.Showcase) {
       setSearchResults([]);
       setSources([]);
       setSummary(null);
@@ -116,6 +123,10 @@ const App: React.FC = () => {
   };
 
   const renderContent = () => {
+    if (activePage === Page.Login) return <LoginPage setActivePage={setActivePage} />;
+    if (activePage === Page.Register) return <RegisterPage setActivePage={setActivePage} />;
+    if (activePage === Page.Profile) return <ProfilePage setActivePage={setActivePage} />;
+
     if (activePage === Page.Showcase) {
       return <Showcase />;
     }
@@ -156,10 +167,12 @@ const App: React.FC = () => {
         isLoading={isLoading}
         theme={theme}
         toggleTheme={toggleTheme}
+        currentUser={currentUser}
+        logout={logout}
       />
       <main className="container mx-auto p-4 sm:p-6 lg:p-8">
         {renderContent()}
-        {activePage !== Page.Web && activePage !== Page.Showcase && <SourceLink sources={sources} />}
+        {activePage !== Page.Web && activePage !== Page.Showcase && !isAuthPage(activePage) && <SourceLink sources={sources} />}
       </main>
       <footer className="text-center p-6 text-sm text-gray-500 dark:text-gray-400 border-t border-gray-200 dark:border-gray-700 mt-8">
         <p className="font-semibold">Google x Naxxivo</p>
@@ -168,5 +181,14 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
+};
+
 
 export default App;
