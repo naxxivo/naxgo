@@ -1,5 +1,8 @@
 {
-  "name": "Google x Naxxivo",
-  "description": "Explore the synergy of technology and creativity. Discover groundbreaking projects, data-driven insights, and innovative ideas shaping the future, powered by Google's advanced AI.",
-  "requestFramePermissions": []
+  "name": "NAXXIVO",
+  "description": "NAXXIVO is a social platform for users to share posts, images, and connect with a vibrant community. It features a clean, modern user interface with animations and interactive elements, powered by a Supabase backend.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "prompt": ""
 }

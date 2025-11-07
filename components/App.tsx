@@ -141,7 +141,7 @@ const App: React.FC = () => {
             <ConnectivityStatusOverlay isOffline={isOffline} isServerDown={!isOffline && isServerDown} />
             
             {!isUserLoggedIn ? (
-                <div className="w-full min-h-screen flex items-center justify-center bg-[var(--theme-bg)]">
+                 <div className="w-full min-h-screen flex items-center justify-center bg-[var(--theme-bg)]">
                     {authMode === 'onboarding' && <AuthPage onSetMode={setAuthMode} />}
                     {(authMode === 'login' || authMode === 'signup') && <AuthForm mode={authMode} onSetMode={setAuthMode} />}
                 </div>

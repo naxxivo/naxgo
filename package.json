@@ -1,5 +1,5 @@
 {
-  "name": "google-x-naxxivo",
+  "name": "naxxivo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,13 +9,17 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.27.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "path": "^0.12.7",
+    "vite": "^7.0.6",
+    "react-dom": "^19.1.1",
+    "react": "^19.1.1",
+    "@supabase/supabase-js": "^2.53.0",
+    "framer-motion": "^12.23.12",
+    "@supabase/auth-js": "^2.71.1",
+    "react-confetti-explosion": "^3.0.3"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@vitejs/plugin-react": "^5.0.0",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
